@@ -19,13 +19,19 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -34,6 +40,9 @@ import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -92,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
             //Uses URL and HttpURLConnection for server connection.
             String result = null;
             try {
+
                 result = sendGet();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -127,6 +137,27 @@ public class MainActivity extends AppCompatActivity {
         protected void onProgressUpdate(Void... values) {
             super.onProgressUpdate(values);
         }
+    }
+
+    private InputStream input() throws IOException {
+
+        URL url = null; // URL
+        try {
+            url = new URL("http://uat.winitsoftware.com/ThemeManager/Data/Products/Products.xml");
+        } catch (MalformedURLException e1) {
+            e1.printStackTrace();
+        }
+        // of
+        // the
+        // XML
+
+        /**
+         * Create the Handler to handle each of the XML tags.
+         **/
+
+
+
+        return url.openStream();
     }
 
     private String sendGet() throws Exception {
@@ -181,6 +212,36 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
+
+    public  void parse(InputStream is) {
+        try {
+            // create a XMLReader from SAXParser
+            XMLReader xmlReader = SAXParserFactory.newInstance().newSAXParser()
+                    .getXMLReader();
+            // create a SAXXMLHandler
+            SAXXMLHandler saxHandler = new SAXXMLHandler();
+            // store handler in XMLReader
+            xmlReader.setContentHandler(saxHandler);
+            // the process starts
+            xmlReader.parse(new InputSource(is));
+            // get the `Laptop list`
+            listDataChild = saxHandler.getListDataChild();
+            listDataHeader = saxHandler.getListDataHeader();
+            listAdapter = new ExpandableListAdapter(getApplicationContext(), listDataHeader, listDataChild);
+
+            // setting list adapter
+            expListView.setAdapter(listAdapter);
+        } catch (Exception ex) {
+            Log.d("XML", "SAXXMLParser: parse() failed");
+            ex.printStackTrace();
+        }
+
+        // return Laptop list
+
+    }
+
+
+
 
     private void readFromWeb(InputStream is) {
 
