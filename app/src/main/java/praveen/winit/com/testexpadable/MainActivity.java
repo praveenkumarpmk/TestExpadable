@@ -1,16 +1,32 @@
 package praveen.winit.com.testexpadable;
 
+import android.content.Context;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.ExpandableListView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,17 +55,22 @@ public class MainActivity extends AppCompatActivity {
 
 
         // preparing list data
+        DoSomeTask doSomeTask = new DoSomeTask();
+        doSomeTask.execute();
+     //   readfile();
+    }
 
-
-       /* RequestQueue queue = Volley.newRequestQueue(this);
+    private void runVolley() {
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
         String url = "http://uat.winitsoftware.com/ThemeManager/Data/Products/Products.xml";
 
-// Request a string response from the provided URL.
+        // Request a string response from the provided URL.
         StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         // Display the first 500 characters of the response string.
+
                         Log.d("Response %s", response);
                     }
                 }, new Response.ErrorListener() {
@@ -58,17 +79,110 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 // Add the request to the RequestQueue.
-        queue.add(stringRequest);*/
+        queue.add(stringRequest);
 
-        readfile();
     }
 
+    class DoSomeTask extends AsyncTask<Void, Void, String> {
+
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            //Uses URL and HttpURLConnection for server connection.
+            String result = null;
+            try {
+                result = sendGet(getApplicationContext());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return result;
+
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+
+            super.onPostExecute(s);
+            try {
+                InputStream is = new ByteArrayInputStream(s.getBytes());
+                readFromWeb(is);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        @Override
+        protected void onProgressUpdate(Void... values) {
+            super.onProgressUpdate(values);
+        }
+    }
+
+    private String sendGet(Context context) throws Exception {
+        String url = "http://uat.winitsoftware.com/ThemeManager/Data/Products/Products.xml";
+        URL obj = new URL(url);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod("GET");
+      //  con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+
+        con.setReadTimeout(10000 /* milliseconds */);
+        con.setConnectTimeout(15000 /* milliseconds */);
+
+        con.setDoOutput(true);
+
+        con.connect();
+        int responseCode = con.getResponseCode();
+        System.out.println("\nSending 'Get' request to URL : " + url + "--" + responseCode);
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(con.getInputStream()));
+        String inputLine;
+        StringBuffer response = new StringBuffer();
+
+        while ((inputLine = in.readLine()) != null) {
+            response.append(inputLine);
+        }
+        in.close();
+
+        System.out.println("Response : -- " + response.toString());
+        return response.toString();
+    }
 
     private void readfile() {
 
 
         try {
             InputStream is = getAssets().open("file_new.xml");
+
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(is);
+
+            Element element = doc.getDocumentElement();
+            element.normalize();
+
+            NodeList nList = doc.getElementsByTagName("Product");
+            readDataAndPutInExpListView(nList);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    private void readFromWeb(InputStream is) {
+
+
+        try {
+           // InputStream is = getAssets().open("file_new.xml");
+
 
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
