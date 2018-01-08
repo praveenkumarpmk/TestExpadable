@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.ExpandableListView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -91,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
             //Uses URL and HttpURLConnection for server connection.
             String result = null;
             try {
-                result = sendGet(getApplicationContext());
+                result = sendGet();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -110,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
 
             super.onPostExecute(s);
             try {
+                if(s == null){
+                 //   Toast.makeText(getApplicationContext(),"Unable To fetch Data",Toast.LENGTH_LONG).show();
+                    return;
+                }
                 InputStream is = new ByteArrayInputStream(s.getBytes());
                 readFromWeb(is);
             } catch (Exception e) {
@@ -124,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private String sendGet(Context context) throws Exception {
+    private String sendGet() throws Exception {
         String url = "http://uat.winitsoftware.com/ThemeManager/Data/Products/Products.xml";
         URL obj = new URL(url);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -134,7 +139,7 @@ public class MainActivity extends AppCompatActivity {
         con.setReadTimeout(10000 /* milliseconds */);
         con.setConnectTimeout(15000 /* milliseconds */);
 
-        con.setDoOutput(true);
+      //  con.setDoOutput(true);
 
         con.connect();
         int responseCode = con.getResponseCode();
